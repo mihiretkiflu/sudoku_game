@@ -124,7 +124,9 @@ const Grid: React.FC<GridProps> = ({
                   onClick={handleCellClick}
                   rowIdx={rowIdx}
                   colIdx={colIdx}
-                  isSelected={isSelected ? isSelected : false}
+                  selectedCellValue={
+                    board[selectedCell.row][selectedCell.col]?.value
+                  }
                   pencilMode={pencilMode}
                 />
               </div>

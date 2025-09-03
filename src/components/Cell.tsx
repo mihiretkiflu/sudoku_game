@@ -7,7 +7,7 @@ interface CellProps {
   rowIdx: number;
   colIdx: number;
   isSelected: boolean;
-  pencilMode: boolean;
+  selectedCellValue: number | null;
 }
 
 const Cell: React.FC<CellProps> = ({
@@ -16,7 +16,7 @@ const Cell: React.FC<CellProps> = ({
   rowIdx,
   colIdx,
   isSelected,
-  pencilMode,
+  selectedCellValue,
 }) => {
   const baseStyles =
     "w-12 h-12 flex items-center justify-center text-3xl focus:outline-none border-0 z-10 font-extralight";
@@ -40,8 +40,8 @@ const Cell: React.FC<CellProps> = ({
           {Array.from({ length: 9 }, (_, i) => i + 1).map((num) => (
             <div
               key={num}
-              className={`text-xs flex items-center justify-center text-gray-400 font-extralight ${
-                cell.miniGrid?.includes(num) ? "text-black" : ""
+              className={`text-xs flex items-center justify-center text-gray-400 font-light ${
+                num == selectedCellValue ? "text-indigo-600" : "text-gray-400"
               }`}
             >
               {cell.miniGrid?.includes(num) ? num : ""}
