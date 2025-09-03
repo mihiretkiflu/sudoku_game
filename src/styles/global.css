@@ -1,0 +1,5 @@
+body {
+  font-family: Arial;
+  background: linear-gradient(to right, #fff, #eee);
+} /* Match screenshot vibe */
+/* Style grid borders thicker every 3 cells for 3x3 boxes */
