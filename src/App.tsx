@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Grid from "./components/Grid";
-import Button from "./components/Button";
 import type { Difficulty, SudokuBoard, SudokuCell } from "./utils/types";
 import NumberPad from "./components/NumberPad";
 import SudokuGenerator from "./utils/sudokuGenerator";

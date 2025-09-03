@@ -1,23 +1,23 @@
 import type { Difficulty } from "./types";
 
-type SudokuBoard = number[][];
+// type SudokuBoard = number[][];
 type SudokuCell = { value: number; isFixed: boolean; isConflict: boolean };
 
 class SudokuGenerator {
   private grid: number[][];
-  private candidates: number[][][];
+  // private candidates: number[][][];
 
   constructor() {
     this.grid = Array(9)
       .fill(null)
       .map(() => Array(9).fill(0));
-    this.candidates = Array(9)
-      .fill(null)
-      .map(() =>
-        Array(9)
-          .fill([])
-          .map(() => [1, 2, 3, 4, 5, 6, 7, 8, 9])
-      );
+    // this.candidates = Array(9)
+    // .fill(null)
+    // .map(() =>
+    //   Array(9)
+    //     .fill([])
+    //     .map(() => [1, 2, 3, 4, 5, 6, 7, 8, 9])
+    // );
   }
 
   // Phase 1: Create a Solved Sudoku Grid
@@ -260,8 +260,8 @@ class SudokuGenerator {
     }
 
     // Convert to SudokuCell format
-    const puzzleCells = puzzle.map((row, r) =>
-      row.map((val, c) => ({
+    const puzzleCells = puzzle.map((row) =>
+      row.map((val) => ({
         value: val,
         isFixed: val !== 0,
         isConflict: false,

@@ -1,6 +1,6 @@
 import React from "react";
 import Cell from "./Cell";
-import type { SudokuBoard, SudokuCell } from "../utils/types";
+import type { SudokuCell } from "../utils/types";
 
 interface GridProps {
   board: SudokuCell[][];
