@@ -25,10 +25,10 @@ const Cell: React.FC<CellProps> = ({
       ? "text-red-600"
       : cell.isFixed
       ? "text-black"
-      : "text-indigo-600";
+      : "text-emerald-600";
   const cellStyles = `${baseStyles} ${textColor} ${
     cell.isFixed ? "font-bold" : ""
-  } ${isSelected ? "bg-indigo-200" : ""}`;
+  } ${isSelected ? "bg-emerald-200" : ""}`;
 
   return (
     <div
@@ -41,7 +41,7 @@ const Cell: React.FC<CellProps> = ({
             <div
               key={num}
               className={`text-xs flex items-center justify-center text-gray-400 font-light ${
-                num == selectedCellValue ? "text-indigo-600" : "text-gray-400"
+                num == selectedCellValue ? "text-emerald-600" : "text-gray-400"
               }`}
             >
               {cell.miniGrid?.includes(num) ? num : ""}

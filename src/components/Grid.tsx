@@ -4,18 +4,16 @@ import type { SudokuCell } from "../utils/types";
 
 interface GridProps {
   board: SudokuCell[][];
-  selectedCell: { row: number; col: number } | null;
+  selectedCell: { row: number; col: number };
   setSelectedCell: React.Dispatch<
-    React.SetStateAction<{ row: number; col: number } | null>
+    React.SetStateAction<{ row: number; col: number }>
   >;
-  pencilMode: boolean;
 }
 
 const Grid: React.FC<GridProps> = ({
   board,
   selectedCell,
   setSelectedCell,
-  pencilMode,
 }) => {
   const checkConflicts = (row: number, col: number, value: number) => {
     if (value === 0) return false;
@@ -107,9 +105,9 @@ const Grid: React.FC<GridProps> = ({
               checkConflicts(rowIdx, colIdx, cell.value);
 
             const cellClass = `
-              ${isInSubgrid || isInRow || isInCol ? "bg-indigo-100" : ""}
-              ${hasSameValue ? "bg-yellow-100" : ""}
-              ${isSelected ? "bg-indigo-200" : ""}
+              ${isInSubgrid || isInRow || isInCol ? "bg-emerald-100" : ""}
+              ${hasSameValue ? "bg-teal-100" : ""}
+              ${isSelected ? "bg-emerald-200" : ""}
               ${isConflicting && !isSelected ? "bg-red-200" : ""}
             `;
 
@@ -124,10 +122,10 @@ const Grid: React.FC<GridProps> = ({
                   onClick={handleCellClick}
                   rowIdx={rowIdx}
                   colIdx={colIdx}
+                  isSelected={isSelected ? isSelected : false}
                   selectedCellValue={
                     board[selectedCell.row][selectedCell.col]?.value
                   }
-                  pencilMode={pencilMode}
                 />
               </div>
             );

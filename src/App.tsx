@@ -32,7 +32,7 @@ const App: React.FC = () => {
   const [selectedCell, setSelectedCell] = useState<{
     row: number;
     col: number;
-  } | null>(null); // Allow null for no selection
+  }>({ row: 0, col: 0 }); // Allow null for no selection
   const selectedCellRef = useRef<{ row: number; col: number } | null>(null);
   const [pencilMode, setPencilMode] = useState(false);
   const [availableDigits, setAvailableDigits] = useState<number[]>([
@@ -200,21 +200,21 @@ const App: React.FC = () => {
       handleCellChange(row, col, num);
       e.preventDefault();
     } else if (e.key === "ArrowUp") {
-      setSelectedCell((prev) =>
-        prev ? { row: Math.max(0, prev.row - 1), col: prev.col } : null
-      );
+      setSelectedCell((prev) => {
+        return { row: Math.max(0, prev.row - 1), col: prev.col };
+      });
     } else if (e.key === "ArrowDown") {
-      setSelectedCell((prev) =>
-        prev ? { row: Math.min(8, prev.row + 1), col: prev.col } : null
-      );
+      setSelectedCell((prev) => {
+        return { row: Math.min(8, prev.row + 1), col: prev.col };
+      });
     } else if (e.key === "ArrowLeft") {
-      setSelectedCell((prev) =>
-        prev ? { row: prev.row, col: Math.max(0, prev.col - 1) } : null
-      );
+      setSelectedCell((prev) => {
+        return { row: prev.row, col: Math.max(0, prev.col - 1) };
+      });
     } else if (e.key === "ArrowRight") {
-      setSelectedCell((prev) =>
-        prev ? { row: prev.row, col: Math.min(8, prev.col + 1) } : null
-      );
+      setSelectedCell((prev) => {
+        return { row: prev.row, col: Math.min(8, prev.col + 1) };
+      });
     }
   };
 
@@ -317,7 +317,7 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center p-4">
       <div className="w-full max-w-6xl bg-white rounded-xl shadow-2xl overflow-hidden">
         {/* Header Section */}
-        <div className="bg-indigo-600 text-white p-6 text-center">
+        <div className="bg-emerald-600 text-white p-6 text-center">
           <h1 className="text-4xl font-extrabold tracking-wide flex items-center justify-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -348,7 +348,7 @@ const App: React.FC = () => {
                   onClick={() => setDifficulty(level)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                     difficulty === level
-                      ? "bg-indigo-600 text-white shadow-md"
+                      ? "bg-emerald-600 text-white shadow-md"
                       : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                   }`}
                 >
@@ -366,7 +366,6 @@ const App: React.FC = () => {
               board={board}
               selectedCell={selectedCell}
               setSelectedCell={setSelectedCell}
-              pencilMode={pencilMode}
             />
           </div>
 
@@ -388,8 +387,8 @@ const App: React.FC = () => {
                   onClick={togglePencilMode}
                   className={`w-full flex items-center justify-center px-3 py-3 border-radius rounded-full transition-all duration-200 relative pencil-button ${
                     pencilMode
-                      ? "on-button bg-gray-200 text-indigo-800 hover:bg-gray-300 border-2 border-indigo-700 "
-                      : "off-button bg-gray-200 text-indigo-800 hover:bg-gray-300 border-2 border-transparent"
+                      ? "on-button bg-gray-200 text-emerald-800 hover:bg-gray-300 border-2 border-emerald-700 "
+                      : "off-button bg-gray-200 text-emerald-800 hover:bg-gray-300 border-2 border-transparent"
                   }  active:scale-95 active:shadow-inner active:bg-gray-300`}
                 >
                   <svg
@@ -410,7 +409,7 @@ const App: React.FC = () => {
                 </button>
                 <button
                   onClick={handleUndo}
-                  className="flex items-center justify-center px-3 py-3 transition-all duration-200 bg-gray-200 text-indigo-800 rounded-full hover:bg-gray-300 border-2 border-transparent active:scale-95 active:shadow-inner active:bg-gray-300"
+                  className="flex items-center justify-center px-3 py-3 transition-all duration-200 bg-gray-200 text-emerald-800 rounded-full hover:bg-gray-300 border-2 border-transparent active:scale-95 active:shadow-inner active:bg-gray-300"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -429,7 +428,7 @@ const App: React.FC = () => {
                 </button>
                 <button
                   onClick={handleRedo}
-                  className="w-full flex items-center justify-center px-3 py-3 transition-all duration-200  bg-gray-200 text-indigo-800 rounded-full hover:bg-gray-300 border-2 border-transparent  active:scale-95 active:shadow-inner active:bg-gray-300"
+                  className="w-full flex items-center justify-center px-3 py-3 transition-all duration-200  bg-gray-200 text-emerald-800 rounded-full hover:bg-gray-300 border-2 border-transparent  active:scale-95 active:shadow-inner active:bg-gray-300"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -455,7 +454,7 @@ const App: React.FC = () => {
               <button
                 onClick={handleNewGame}
                 // className="flex items-center  px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-200"
-                className="w-full flex items-center justify-center px-4 py-2 bg-indigo-700 text-white rounded-lg hover:bg-indigo-600 transition-all duration-200"
+                className="w-full flex items-center justify-center px-4 py-2 bg- text-white rounded-lg hover:bg-emerald-600 transition-all duration-200"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

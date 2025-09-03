@@ -12,7 +12,7 @@ const Button: React.FC<ButtonProps> = ({
 }) => {
   const baseStyles = "px-4 py-2 rounded font-semibold text-white transition";
   const variantStyles = {
-    primary: "bg-indigo-500 hover:bg-indigo-600",
+    primary: "bg-emerald-500 hover:bg-emerald-600",
     secondary: "bg-gray-500 hover:bg-gray-600",
     danger: "bg-red-500 hover:bg-red-600",
   }[variant];
