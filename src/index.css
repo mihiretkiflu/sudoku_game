@@ -30,7 +30,7 @@ body {
 .pencil-button.on-button::after {
   content: "ON";
   color: #ffffff;
-  background: #2563eb;
+  background: #0e9f6e;
   padding: 5px;
 }
 
