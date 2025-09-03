@@ -25,10 +25,10 @@ const Cell: React.FC<CellProps> = ({
       ? "text-red-600"
       : cell.isFixed
       ? "text-black"
-      : "text-blue-600";
+      : "text-indigo-600";
   const cellStyles = `${baseStyles} ${textColor} ${
     cell.isFixed ? "font-bold" : ""
-  } ${isSelected ? "bg-blue-200" : ""}`;
+  } ${isSelected ? "bg-indigo-200" : ""}`;
 
   return (
     <div

@@ -317,7 +317,7 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center p-4">
       <div className="w-full max-w-6xl bg-white rounded-xl shadow-2xl overflow-hidden">
         {/* Header Section */}
-        <div className="bg-blue-600 text-white p-6 text-center">
+        <div className="bg-indigo-600 text-white p-6 text-center">
           <h1 className="text-4xl font-extrabold tracking-wide flex items-center justify-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -348,7 +348,7 @@ const App: React.FC = () => {
                   onClick={() => setDifficulty(level)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                     difficulty === level
-                      ? "bg-blue-600 text-white shadow-md"
+                      ? "bg-indigo-600 text-white shadow-md"
                       : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                   }`}
                 >
@@ -371,27 +371,25 @@ const App: React.FC = () => {
           </div>
 
           {/* Controls Panel */}
-          <div className="w-full md:w-1/3 rounded-lg shadow-inner">
-            <div className="space-y-4">
+          <div className="w-full md:w-1/3 rounded-lg">
+            <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flow">
                   <div className="text-lg font-semibold text-gray-600">
                     {" "}
-                    Mistakes
+                    Mistakes:
+                    <span className="text-lg text-gray-600"> {mistake}/3</span>
                   </div>
-                  <span className="text-lg text-gray-600"> {mistake}/3</span>
                 </div>
-                <div className="text-lg font-semibold text-gray-600">
-                  {pencilMode ? "ON" : "OFF"}
-                </div>
+                <div className="text-lg font-semibold text-gray-600"></div>
               </div>
               <div className="flex flex-col sm:flex-row gap-4">
                 <button
                   onClick={togglePencilMode}
                   className={`w-full flex items-center justify-center px-3 py-3 border-radius rounded-full transition-all duration-200 relative pencil-button ${
                     pencilMode
-                      ? "on-button bg-gray-200 text-blue-800 hover:bg-gray-300 border-2 border-blue-700 "
-                      : "off-button bg-gray-200 text-blue-800 hover:bg-gray-300 border-2 border-transparent"
+                      ? "on-button bg-gray-200 text-indigo-800 hover:bg-gray-300 border-2 border-indigo-700 "
+                      : "off-button bg-gray-200 text-indigo-800 hover:bg-gray-300 border-2 border-transparent"
                   }  active:scale-95 active:shadow-inner active:bg-gray-300`}
                 >
                   <svg
@@ -412,7 +410,7 @@ const App: React.FC = () => {
                 </button>
                 <button
                   onClick={handleUndo}
-                  className="flex items-center justify-center px-3 py-3 transition-all duration-200 bg-gray-200 text-blue-800 rounded-full hover:bg-gray-300 border-2 border-transparent active:scale-95 active:shadow-inner active:bg-gray-300"
+                  className="flex items-center justify-center px-3 py-3 transition-all duration-200 bg-gray-200 text-indigo-800 rounded-full hover:bg-gray-300 border-2 border-transparent active:scale-95 active:shadow-inner active:bg-gray-300"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -431,7 +429,7 @@ const App: React.FC = () => {
                 </button>
                 <button
                   onClick={handleRedo}
-                  className="w-full flex items-center justify-center px-3 py-3 transition-all duration-200  bg-gray-200 text-blue-800 rounded-full hover:bg-gray-300 border-2 border-transparent  active:scale-95 active:shadow-inner active:bg-gray-300"
+                  className="w-full flex items-center justify-center px-3 py-3 transition-all duration-200  bg-gray-200 text-indigo-800 rounded-full hover:bg-gray-300 border-2 border-transparent  active:scale-95 active:shadow-inner active:bg-gray-300"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -456,7 +454,8 @@ const App: React.FC = () => {
 
               <button
                 onClick={handleNewGame}
-                className="flex items-center px-4 py-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-all duration-200"
+                // className="flex items-center  px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-200"
+                className="w-full flex items-center justify-center px-4 py-2 bg-indigo-700 text-white rounded-lg hover:bg-indigo-600 transition-all duration-200"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

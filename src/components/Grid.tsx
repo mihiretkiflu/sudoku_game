@@ -107,9 +107,9 @@ const Grid: React.FC<GridProps> = ({
               checkConflicts(rowIdx, colIdx, cell.value);
 
             const cellClass = `
-              ${isInSubgrid || isInRow || isInCol ? "bg-blue-100" : ""}
+              ${isInSubgrid || isInRow || isInCol ? "bg-indigo-100" : ""}
               ${hasSameValue ? "bg-yellow-100" : ""}
-              ${isSelected ? "bg-blue-200" : ""}
+              ${isSelected ? "bg-indigo-200" : ""}
               ${isConflicting && !isSelected ? "bg-red-200" : ""}
             `;
 

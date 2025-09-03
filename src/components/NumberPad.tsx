@@ -16,7 +16,7 @@ const NumberPad: React.FC<NumberPadProps> = ({ onSelect, availableDigits }) => {
           onClick={() => onSelect(num)}
           className={`w-16 h-16 rounded-md  ${
             availableDigits.includes(num)
-              ? "bg-gray-200 text-blue-800 hover:bg-gray-300 font-semibold text-4xl"
+              ? "bg-gray-200 text-indigo-800 hover:bg-gray-300 font-semibold text-4xl"
               : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}
           disabled={!availableDigits.includes(num)}
