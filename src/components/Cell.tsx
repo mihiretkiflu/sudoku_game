@@ -35,7 +35,7 @@ const Cell: React.FC<CellProps> = ({
       className={`w-full h-full flex items-center justify-center relative ${cellStyles}`}
       onClick={() => onClick(rowIdx, colIdx)}
     >
-      {!cell.isFixed && pencilMode && (
+      {!cell.isFixed && (
         <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 gap-0.5 p-1">
           {Array.from({ length: 9 }, (_, i) => i + 1).map((num) => (
             <div
