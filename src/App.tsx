@@ -41,6 +41,14 @@ const App: React.FC = () => {
   const [undoHistory, setUndoHistory] = useState<ChangeGroup[]>([]);
   const [redoHistory, setRedoHistory] = useState<ChangeGroup[]>([]);
   const [mistake, setMistake] = useState(0);
+  const [isWin, setIsWin] = useState(false);
+  // Use a ref to track the latest pencilMode value
+  const pencilModeRef = useRef(pencilMode);
+
+  useEffect(() => {
+    pencilModeRef.current = pencilMode; // Sync ref with state
+  }, [pencilMode]);
+
   const togglePencilMode = () => {
     setPencilMode((prev) => !prev);
   };
@@ -76,18 +84,15 @@ const App: React.FC = () => {
     setSolution([...solution2D]);
   }, [difficulty, initializeBoard, generatePuzzle]);
 
+  console.log({ pencilMode });
+
   const handleCellChange = (row: number, col: number, value: number) => {
     const changeGroup: ChangeGroup = [];
-    let a = 0;
-    a++;
-    console.log("IN___");
     setBoard((prevBoard) => {
-      console.log(prevBoard);
+      let error = false;
       const newBoard = prevBoard.map((r, i) =>
         r.map((cell, j) => {
           if (i === row && j === col) {
-            console.log(i, j, a);
-
             const oldValue = cell.value;
             const oldMiniGrid = [...(cell.miniGrid || [])];
             changeGroup.push({
@@ -98,8 +103,10 @@ const App: React.FC = () => {
               oldMiniGrid,
               newMiniGrid: oldMiniGrid,
             });
+            console.log("Current pencilMode (ref):", pencilModeRef.current); // Use ref for latest value
 
-            if (pencilMode) {
+            if (pencilModeRef.current) {
+              // Use ref instead of pencilMode
               const updatedMiniGrid = cell.miniGrid || [];
               const newMiniGrid = updatedMiniGrid.includes(value)
                 ? updatedMiniGrid.filter((n) => n !== value)
@@ -109,13 +116,13 @@ const App: React.FC = () => {
               const isConflict = checkConflicts(prevBoard, row, col, value);
               const correctValue = solution[row][col];
               const isWrong = value !== 0 && value !== correctValue;
-              if (isWrong) {
-                setMistake((prev) => prev + 1);
-              }
+              error = isWrong;
+
               return { ...cell, value, isConflict, isWrong, miniGrid: [] };
             }
           }
-          if (!pencilMode && value !== 0) {
+          if (!pencilModeRef.current && value !== 0) {
+            // Use ref
             const isInSameRow = i === row;
             const isInSameCol = j === col;
             const isInSameSubgrid =
@@ -125,14 +132,6 @@ const App: React.FC = () => {
               const oldMiniGrid = [...(cell.miniGrid || [])];
               const newMiniGrid = oldMiniGrid.filter((n) => n !== value);
               if (oldMiniGrid.length !== newMiniGrid.length) {
-                changeGroup.push({
-                  row: i,
-                  col: j,
-                  oldValue: cell.value,
-                  newValue: cell.value,
-                  oldMiniGrid,
-                  newMiniGrid,
-                });
                 return {
                   ...cell,
                   miniGrid: newMiniGrid,
@@ -143,6 +142,22 @@ const App: React.FC = () => {
           return cell;
         })
       );
+      if (error) {
+        setMistake((prev) => prev + 1);
+      }
+
+      const isBoardComplete = newBoard.every((row) =>
+        row.every(
+          (cell) =>
+            cell.isFixed ||
+            (cell.value !== 0 && !cell.isWrong && !cell.isConflict)
+        )
+      );
+      if (isBoardComplete) {
+        setIsWin(true);
+        setSelectedCell({ row: 0, col: 0 });
+      }
+
       return newBoard;
     });
     setUndoHistory((prev) => [...prev, changeGroup]);
@@ -366,6 +381,7 @@ const App: React.FC = () => {
               board={board}
               selectedCell={selectedCell}
               setSelectedCell={setSelectedCell}
+              isWin={isWin}
             />
           </div>
 
@@ -395,13 +411,13 @@ const App: React.FC = () => {
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 30 31"
-                    stroke-width="2"
+                    strokeWidth="2"
                     stroke="currentColor"
                     className="size-8 ml-0.5 mt-0.5"
                   >
                     <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                       d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125"
                     />
                   </svg>
@@ -420,7 +436,7 @@ const App: React.FC = () => {
                     viewBox="0 0 16 16"
                   >
                     <path
-                      fill-rule="evenodd"
+                      fillRule="evenodd"
                       d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2z"
                     />
                     <path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466" />
@@ -439,7 +455,7 @@ const App: React.FC = () => {
                     viewBox="0 0 16 16"
                   >
                     <path
-                      fill-rule="evenodd"
+                      fillRule="evenodd"
                       d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"
                     />
                     <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466" />
@@ -454,7 +470,7 @@ const App: React.FC = () => {
               <button
                 onClick={handleNewGame}
                 // className="flex items-center  px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-200"
-                className="w-full flex items-center justify-center px-4 py-2 bg- text-white rounded-lg hover:bg-emerald-600 transition-all duration-200"
+                className="w-full flex items-center justify-center px-4 py-2 bg- bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-all duration-200"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

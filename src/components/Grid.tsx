@@ -8,12 +8,14 @@ interface GridProps {
   setSelectedCell: React.Dispatch<
     React.SetStateAction<{ row: number; col: number }>
   >;
+  isWin: boolean;
 }
 
 const Grid: React.FC<GridProps> = ({
   board,
   selectedCell,
   setSelectedCell,
+  isWin,
 }) => {
   const checkConflicts = (row: number, col: number, value: number) => {
     if (value === 0) return false;
@@ -38,16 +40,27 @@ const Grid: React.FC<GridProps> = ({
   };
 
   return (
-    <div className="relative w-[432px] h-[432px] border-3 m-2">
+    <div
+      className={`relative w-[432px] h-[432px] border-3 m-2 overflow-hidden ${
+        isWin ? "border-green-500 animate-pulse" : "border-gray-500"
+      }`}
+    >
+      {isWin && (
+        <div className="absolute inset-0 flex items-center justify-center bg-transparent bg-opacity-60 z-20">
+          <h2 className="text-emerald-800 text-4xl font-bold drop-shadow-lg animate-fade-in">
+            Congratulations!
+          </h2>
+        </div>
+      )}
       <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 gap-0 z-10 pointer-events-none">
-        <div className="border-r-3 border-b-3 border-gray-500"></div>
-        <div className="border-r-3 border-b-3 border-gray-500"></div>
-        <div className="border-b-3 border-gray-500"></div>
-        <div className="border-r-3 border-b-3 border-gray-500"></div>
-        <div className="border-r-3 border-b-3 border-gray-500"></div>
-        <div className="border-b-3 border-gray-500"></div>
-        <div className="border-r-3 border-gray-500"></div>
-        <div className="border-r-3 border-gray-500"></div>
+        <div className="border-r-3 border-b-5"></div>
+        <div className="border-r-3 border-b-3"></div>
+        <div className="border-b-3"></div>
+        <div className="border-r-3 border-b-3"></div>
+        <div className="border-r-3 border-b-3"></div>
+        <div className="border-b-3"></div>
+        <div className="border-r-3"></div>
+        <div className="border-r-3"></div>
         <div></div>
       </div>
       <div className="absolute inset-0 grid grid-cols-9 grid-rows-9 gap-0 z-10 pointer-events-none">
@@ -92,7 +105,7 @@ const Grid: React.FC<GridProps> = ({
             const hasSameValue =
               selectedCell &&
               !isSelected &&
-              cell.value === board[selectedCell.row][selectedCell.col].value &&
+              cell.value === board[selectedCell.row][selectedCell.col]?.value &&
               cell.value !== 0 &&
               !isInRow &&
               !isInCol &&
@@ -100,15 +113,16 @@ const Grid: React.FC<GridProps> = ({
             const isConflicting =
               selectedCell &&
               cell.value !== 0 &&
-              cell.value === board[selectedCell.row][selectedCell.col].value &&
+              cell.value === board[selectedCell.row][selectedCell.col]?.value &&
               (isInRow || isInCol || isInSubgrid) &&
               checkConflicts(rowIdx, colIdx, cell.value);
 
             const cellClass = `
               ${isInSubgrid || isInRow || isInCol ? "bg-emerald-100" : ""}
-              ${hasSameValue ? "bg-teal-100" : ""}
-              ${isSelected ? "bg-emerald-200" : ""}
+              ${hasSameValue ? "bg-teal-200" : ""}
+              ${isSelected ? "bg-emerald-800" : ""}
               ${isConflicting && !isSelected ? "bg-red-200" : ""}
+              ${isWin ? "animate-bounce" : ""}
             `;
 
             return (
@@ -124,7 +138,7 @@ const Grid: React.FC<GridProps> = ({
                   colIdx={colIdx}
                   isSelected={isSelected ? isSelected : false}
                   selectedCellValue={
-                    board[selectedCell.row][selectedCell.col]?.value
+                    board[selectedCell?.row || 0][selectedCell?.col || 0]?.value
                   }
                 />
               </div>
