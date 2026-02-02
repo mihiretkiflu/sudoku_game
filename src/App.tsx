@@ -84,7 +84,7 @@ const App: React.FC = () => {
     setSolution([...solution2D]);
   }, [difficulty, initializeBoard, generatePuzzle]);
 
-  console.log({ pencilMode });
+  // console.log({ pencilMode });
 
   const handleCellChange = (row: number, col: number, value: number) => {
     const changeGroup: ChangeGroup = [];
@@ -103,7 +103,7 @@ const App: React.FC = () => {
               oldMiniGrid,
               newMiniGrid: oldMiniGrid,
             });
-            console.log("Current pencilMode (ref):", pencilModeRef.current); // Use ref for latest value
+            // console.log("Current pencilMode (ref):", pencilModeRef.current); // Use ref for latest value
 
             if (pencilModeRef.current) {
               // Use ref instead of pencilMode
@@ -329,14 +329,14 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center p-2 sm:p-4 w-220">
       <div className="w-full max-w-6xl bg-white rounded-xl shadow-2xl overflow-hidden">
         {/* Header Section */}
-        <div className="bg-emerald-600 text-white p-6 text-center">
-          <h1 className="text-4xl font-extrabold tracking-wide flex items-center justify-center gap-2">
+        <div className="bg-emerald-600 text-white p-4 sm:p-6 text-center">
+          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-wide flex items-center justify-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-8 w-8"
+              className="h-6 sm:h-8 w-6 sm:w-8"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -351,17 +351,17 @@ const App: React.FC = () => {
             Sudoku Master
           </h1>
         </div>
-        <div className="m-2 p-2 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <span className="text-lg font-semibold text-gray-700">
+        <div className="m-2 p-2 flex flex-col sm:flex-row items-center justify-between">
+          <div className="flex items-center space-x-2 mb-2 sm:mb-0">
+            <span className="text-base sm:text-lg font-semibold text-gray-700">
               Difficulty:
             </span>
-            <div className="flex space-x-2">
+            <div className="flex space-x-2 flex-wrap">
               {difficulties.map((level) => (
                 <button
                   key={level}
                   onClick={() => setDifficulty(level)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                  className={`px-2 sm:px-4 py-1 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 ${
                     difficulty === level
                       ? "bg-emerald-600 text-white shadow-md"
                       : "bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -374,38 +374,41 @@ const App: React.FC = () => {
           </div>
         </div>
         {/* Main Content */}
-        <div className="p-6 flex flex-col md:flex-row gap-4">
+        <div className="p-2 sm:p-6 flex flex-col sm:flex-row gap-4">
           {/* Game Area */}
-          <div className="w-full md:w-2/3">
+          <div className="w-full sm:w-2/3">
             <Grid
               board={board}
               selectedCell={selectedCell}
               setSelectedCell={setSelectedCell}
               isWin={isWin}
             />
+            {isWin && (
+              <div className="mt-2 sm:mt-4 p-2 sm:p-4 bg-green-100 text-green-800 rounded-lg text-center font-bold text-lg sm:text-xl">
+                Win!
+              </div>
+            )}
           </div>
 
           {/* Controls Panel */}
-          <div className="w-full md:w-1/3 rounded-lg">
+          <div className="w-full sm:w-1/3 rounded-lg">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <div className="flow">
-                  <div className="text-lg font-semibold text-gray-600">
-                    {" "}
-                    Mistakes:
-                    <span className="text-lg text-gray-600"> {mistake}/3</span>
-                  </div>
+                <div className="text-base sm:text-lg font-semibold text-gray-600">
+                  Mistakes:{" "}
+                  <span className="text-base sm:text-lg">{mistake}/3</span>
                 </div>
-                <div className="text-lg font-semibold text-gray-600"></div>
               </div>
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="grid grid-cols-3 gap-2 sm:gap-4 w-2xs">
                 <button
                   onClick={togglePencilMode}
-                  className={`w-full flex items-center justify-center px-3 py-3 border-radius rounded-full transition-all duration-200 relative pencil-button ${
-                    pencilMode
-                      ? "on-button bg-gray-200 text-emerald-800 hover:bg-gray-300 border-2 border-emerald-700 "
-                      : "off-button bg-gray-200 text-emerald-800 hover:bg-gray-300 border-2 border-transparent"
-                  }  active:scale-95 active:shadow-inner active:bg-gray-300`}
+                  // className={`w-full flex items-center justify-center px-2 sm:px-3 py-2 sm:py-3 rounded-full transition-all duration-200 relative pencil-button ${
+                  className={`flex items-center justify-center px-2 sm:px-3 py-2 sm:py-3 transition-all duration-200 bg-gray-200 text-emerald-800 rounded-full hover:bg-gray-300 border-2 border-transparent active:scale-95 active:shadow-inner active:bg-gray-300
+                   ${
+                     pencilMode
+                       ? "bg-gray-200 text-emerald-800 hover:bg-gray-300 border-2 border-emerald-700"
+                       : "bg-gray-200 text-emerald-800 hover:bg-gray-300 border-2 border-transparent"
+                   } active:scale-95 active:shadow-inner active:bg-gray-300`}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -413,7 +416,7 @@ const App: React.FC = () => {
                     viewBox="0 0 30 31"
                     strokeWidth="2"
                     stroke="currentColor"
-                    className="size-8 ml-0.5 mt-0.5"
+                    className="size-6 sm:size-8"
                   >
                     <path
                       strokeLinecap="round"
@@ -421,18 +424,17 @@ const App: React.FC = () => {
                       d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125"
                     />
                   </svg>
-                  {/* {pencilMode ? "ON" : "OFF"} */}
                 </button>
                 <button
                   onClick={handleUndo}
-                  className="flex items-center justify-center px-3 py-3 transition-all duration-200 bg-gray-200 text-emerald-800 rounded-full hover:bg-gray-300 border-2 border-transparent active:scale-95 active:shadow-inner active:bg-gray-300"
+                  className="flex items-center justify-center px-2 sm:px-3 py-2 sm:py-3 transition-all duration-200 bg-gray-200 text-emerald-800 rounded-full hover:bg-gray-300 border-2 border-transparent active:scale-95 active:shadow-inner active:bg-gray-300"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="16"
                     height="16"
                     fill="currentColor"
-                    className="bi bi-arrow-counterclockwise h-8 w-8"
+                    className="bi bi-arrow-counterclockwise h-6 sm:h-8 w-6 sm:w-8"
                     viewBox="0 0 16 16"
                   >
                     <path
@@ -444,14 +446,15 @@ const App: React.FC = () => {
                 </button>
                 <button
                   onClick={handleRedo}
-                  className="w-full flex items-center justify-center px-3 py-3 transition-all duration-200  bg-gray-200 text-emerald-800 rounded-full hover:bg-gray-300 border-2 border-transparent  active:scale-95 active:shadow-inner active:bg-gray-300"
+                  className="flex items-center justify-center px-2 sm:px-3 py-2 sm:py-3 transition-all duration-200 bg-gray-200 text-emerald-800 rounded-full hover:bg-gray-300 border-2 border-transparent active:scale-95 active:shadow-inner active:bg-gray-300"
+                  // className="w-full flex items-center justify-center px-2 sm:px-3 py-2 sm:py-3 transition-all duration-200 bg-gray-200 text-emerald-800 rounded-full hover:bg-gray-300 border-2 border-transparent active:scale-95 active:shadow-inner active:bg-gray-300"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="16"
                     height="16"
                     fill="currentColor"
-                    className="bi bi-arrow-clockwise  h-8 w-8 "
+                    className="bi bi-arrow-clockwise h-6 sm:h-8 w-6 sm:w-8"
                     viewBox="0 0 16 16"
                   >
                     <path
@@ -465,16 +468,15 @@ const App: React.FC = () => {
               <NumberPad
                 onSelect={handleNumber}
                 availableDigits={availableDigits}
+                // className="grid grid-cols-3 gap-2 sm:gap-3"
               />
-
               <button
                 onClick={handleNewGame}
-                // className="flex items-center  px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-200"
-                className="w-full flex items-center justify-center px-4 py-2 bg- bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-all duration-200"
+                className="w-full flex items-center justify-center px-3 sm:px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-all duration-200"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-2"
+                  className="h-4 sm:h-5 w-4 sm:w-5 mr-1 sm:mr-2"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -490,11 +492,11 @@ const App: React.FC = () => {
               </button>
               <button
                 onClick={handleReset}
-                className="w-full flex items-center justify-center px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-200"
+                className="w-full flex items-center justify-center px-3 sm:px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-200"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-2"
+                  className="h-4 sm:h-5 w-4 sm:w-5 mr-1 sm:mr-2"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"

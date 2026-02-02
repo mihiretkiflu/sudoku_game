@@ -41,26 +41,26 @@ const Grid: React.FC<GridProps> = ({
 
   return (
     <div
-      className={`relative w-[432px] h-[432px] border-3 m-2 overflow-hidden ${
+      className={`relative w-full max-w-[432px] h-auto aspect-square border-2 sm:border-3 m-1 sm:m-2 overflow-hidden ${
         isWin ? "border-green-500 animate-pulse" : "border-gray-500"
       }`}
     >
       {isWin && (
-        <div className="absolute inset-0 flex items-center justify-center bg-transparent bg-opacity-60 z-20">
-          <h2 className="text-emerald-800 text-4xl font-bold drop-shadow-lg animate-fade-in">
+        <div className="absolute inset-0 flex items-center justify-center bg-transparent bg-opacity-50 z-20">
+          <h2 className="text-emerald-700 text-2xl sm:text-4xl font-bold drop-shadow-lg  ">
             Congratulations!
           </h2>
         </div>
       )}
       <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 gap-0 z-10 pointer-events-none">
-        <div className="border-r-3 border-b-5"></div>
-        <div className="border-r-3 border-b-3"></div>
-        <div className="border-b-3"></div>
-        <div className="border-r-3 border-b-3"></div>
-        <div className="border-r-3 border-b-3"></div>
-        <div className="border-b-3"></div>
-        <div className="border-r-3"></div>
-        <div className="border-r-3"></div>
+        <div className="border-r-2 sm:border-r-3 border-b-2 sm:border-b-3"></div>
+        <div className="border-r-2 sm:border-r-3 border-b-2 sm:border-b-3"></div>
+        <div className="border-b-2 sm:border-b-3"></div>
+        <div className="border-r-2 sm:border-r-3 border-b-2 sm:border-b-3"></div>
+        <div className="border-r-2 sm:border-r-3 border-b-2 sm:border-b-3"></div>
+        <div className="border-b-2 sm:border-b-3"></div>
+        <div className="border-r-2 sm:border-r-3"></div>
+        <div className="border-r-2 sm:border-r-3"></div>
         <div></div>
       </div>
       <div className="absolute inset-0 grid grid-cols-9 grid-rows-9 gap-0 z-10 pointer-events-none">
@@ -69,22 +69,22 @@ const Grid: React.FC<GridProps> = ({
             <div
               key={`${rowIdx}-${colIdx}`}
               className={`
-                ${
-                  rowIdx % 3 !== 2 && colIdx % 3 !== 2
-                    ? "border-b border-r border-gray-300"
-                    : ""
-                }
-                ${
-                  rowIdx % 3 === 2 && colIdx % 3 !== 2
-                    ? "border-r border-gray-300"
-                    : ""
-                }
-                ${
-                  rowIdx % 3 !== 2 && colIdx % 3 === 2
-                    ? "border-b border-gray-300"
-                    : ""
-                }
-              `}
+              ${
+                rowIdx % 3 !== 2 && colIdx % 3 !== 2
+                  ? "border-b border-r border-gray-300"
+                  : ""
+              }
+              ${
+                rowIdx % 3 === 2 && colIdx % 3 !== 2
+                  ? "border-r border-gray-300"
+                  : ""
+              }
+              ${
+                rowIdx % 3 !== 2 && colIdx % 3 === 2
+                  ? "border-b border-gray-300"
+                  : ""
+              }
+            `}
             ></div>
           ))
         )}
@@ -118,12 +118,12 @@ const Grid: React.FC<GridProps> = ({
               checkConflicts(rowIdx, colIdx, cell.value);
 
             const cellClass = `
-              ${isInSubgrid || isInRow || isInCol ? "bg-emerald-100" : ""}
-              ${hasSameValue ? "bg-teal-200" : ""}
-              ${isSelected ? "bg-emerald-800" : ""}
-              ${isConflicting && !isSelected ? "bg-red-200" : ""}
-              ${isWin ? "animate-bounce" : ""}
-            `;
+            ${isInSubgrid || isInRow || isInCol ? "bg-emerald-100" : ""}
+            ${hasSameValue ? "bg-teal-200" : ""}
+            ${isSelected ? "bg-emerald-800" : ""}
+            ${isConflicting && !isSelected ? "bg-red-200" : ""}
+            ${isWin ? "animate-bounce-contained" : ""}
+          `;
 
             return (
               <div

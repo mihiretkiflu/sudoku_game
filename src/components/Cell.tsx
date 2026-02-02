@@ -34,16 +34,18 @@ const Cell: React.FC<CellProps> = ({
 
   return (
     <div
-      className={`w-full h-full flex items-center justify-center relative ${cellStyles}`}
+      className={`w-full h-full flex items-center justify-center relative ${
+        cell.isFixed ? "text-emerald-800 font-bold" : "text-gray-900"
+      } ${cellStyles}`}
       onClick={() => onClick(rowIdx, colIdx)}
     >
       {!cell.isFixed && (
-        <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 gap-0.5 p-1">
+        <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 gap-0.5 p-0.5 sm:p-1">
           {Array.from({ length: 9 }, (_, i) => i + 1).map((num) => (
             <div
               key={num}
-              className={`text-xs flex items-center justify-center text-gray-400 font-light ${
-                num == selectedCellValue ? "text-gray-900" : "text-gray-400"
+              className={`text-[8px] sm:text-xs flex items-center justify-center ${
+                num === selectedCellValue ? "text-gray-900" : "text-gray-400"
               }`}
             >
               {cell.miniGrid?.includes(num) ? num : ""}
@@ -51,7 +53,9 @@ const Cell: React.FC<CellProps> = ({
           ))}
         </div>
       )}
-      <span>{cell.value === 0 ? "" : cell.value}</span>
+      <span className="text-lg sm:text-2xl">
+        {cell.value === 0 ? "" : cell.value}
+      </span>
     </div>
   );
 };
