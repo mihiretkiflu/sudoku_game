@@ -19,7 +19,7 @@ const Cell: React.FC<CellProps> = ({
   selectedCellValue,
 }) => {
   const baseStyles =
-    "w-12 h-12 flex items-center justify-center text-3xl focus:outline-none border-0 z-10 font-extralight";
+    "w-full h-full flex items-center justify-center text-3xl focus:outline-none border-0 z-10 font-extralight";
   const textColor =
     (cell.isConflict || cell.isWrong) && !cell.isFixed
       ? "text-red-600"
