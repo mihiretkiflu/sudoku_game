@@ -40,111 +40,103 @@ const Grid: React.FC<GridProps> = ({
   };
 
   return (
-    <div
-      className={`relative w-full max-w-[432px] h-auto aspect-square border-2 sm:border-3 m-1 sm:m-2 overflow-hidden ${
-        isWin ? "border-green-500 animate-pulse" : "border-gray-500"
-      }`}
-    >
-      {isWin && (
-        <div className="absolute inset-0 flex items-center justify-center bg-transparent bg-opacity-50 z-20">
-          <h2 className="text-emerald-700 text-2xl sm:text-4xl font-bold drop-shadow-lg  ">
-            Congratulations!
-          </h2>
+    <div className="w-full h-full flex items-center justify-center p-2 sm:p-0">
+      <div
+        className={`relative w-full max-w-[500px] aspect-square bg-white border-2 sm:border-4 overflow-hidden transition-all duration-500 ${
+          isWin ? "border-green-500 animate-pulse shadow-[0_0_20px_rgba(16,185,129,0.5)]" : "border-gray-800 shadow-xl"
+        }`}
+      >
+        {isWin && (
+          <div className="absolute inset-0 flex items-center justify-center bg-emerald-900/40 backdrop-blur-sm z-30 animate-fade-in">
+            <div className="bg-white/90 p-6 rounded-2xl shadow-xl transform animate-bounce-contained text-center">
+              <h2 className="text-emerald-600 text-3xl font-extrabold mb-2">
+                Solved!
+              </h2>
+              <p className="text-gray-600 font-medium">Great job!</p>
+            </div>
+          </div>
+        )}
+
+        {/* Thick grid lines layer - restored to use borders/divs logic visually similar to before but cleaner implementation */}
+        <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 gap-0 z-10 pointer-events-none">
+           {/* Subgrid Borders - using internal borders on the 3x3 grid items */}
+           {[...Array(9)].map((_, i) => (
+             <div 
+               key={i} 
+               className={`
+                 ${i % 3 !== 2 ? 'border-r-2 sm:border-r-4 border-gray-800' : ''}
+                 ${Math.floor(i / 3) !== 2 ? 'border-b-2 sm:border-b-4 border-gray-800' : ''}
+               `}
+             />
+           ))}
         </div>
-      )}
-      <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 gap-0 z-10 pointer-events-none">
-        <div className="border-r-2 sm:border-r-3 border-b-2 sm:border-b-3"></div>
-        <div className="border-r-2 sm:border-r-3 border-b-2 sm:border-b-3"></div>
-        <div className="border-b-2 sm:border-b-3"></div>
-        <div className="border-r-2 sm:border-r-3 border-b-2 sm:border-b-3"></div>
-        <div className="border-r-2 sm:border-r-3 border-b-2 sm:border-b-3"></div>
-        <div className="border-b-2 sm:border-b-3"></div>
-        <div className="border-r-2 sm:border-r-3"></div>
-        <div className="border-r-2 sm:border-r-3"></div>
-        <div></div>
-      </div>
-      <div className="absolute inset-0 grid grid-cols-9 grid-rows-9 gap-0 z-10 pointer-events-none">
-        {[...Array(9)].map((_, rowIdx) =>
-          [...Array(9)].map((_, colIdx) => (
-            <div
-              key={`${rowIdx}-${colIdx}`}
-              className={`
-              ${
-                rowIdx % 3 !== 2 && colIdx % 3 !== 2
-                  ? "border-b border-r border-gray-300"
-                  : ""
-              }
-              ${
-                rowIdx % 3 === 2 && colIdx % 3 !== 2
-                  ? "border-r border-gray-300"
-                  : ""
-              }
-              ${
-                rowIdx % 3 !== 2 && colIdx % 3 === 2
-                  ? "border-b border-gray-300"
-                  : ""
-              }
-            `}
-            ></div>
-          ))
-        )}
-      </div>
-      <div className="absolute inset-0 grid grid-cols-9 grid-rows-9 gap-px">
-        {board.map((row, rowIdx) =>
-          row.map((cell, colIdx) => {
-            const isSelected =
-              selectedCell &&
-              selectedCell.row === rowIdx &&
-              selectedCell.col === colIdx;
-            const isInSubgrid =
-              selectedCell &&
-              Math.floor(rowIdx / 3) === Math.floor(selectedCell.row / 3) &&
-              Math.floor(colIdx / 3) === Math.floor(selectedCell.col / 3);
-            const isInRow = selectedCell && selectedCell.row === rowIdx;
-            const isInCol = selectedCell && selectedCell.col === colIdx;
-            const hasSameValue =
-              selectedCell &&
-              !isSelected &&
-              cell.value === board[selectedCell.row][selectedCell.col]?.value &&
-              cell.value !== 0 &&
-              !isInRow &&
-              !isInCol &&
-              !isInSubgrid;
-            const isConflicting =
-              selectedCell &&
-              cell.value !== 0 &&
-              cell.value === board[selectedCell.row][selectedCell.col]?.value &&
-              (isInRow || isInCol || isInSubgrid) &&
-              checkConflicts(rowIdx, colIdx, cell.value);
 
-            const cellClass = `
-            ${isInSubgrid || isInRow || isInCol ? "bg-emerald-100" : ""}
-            ${hasSameValue ? "bg-teal-200" : ""}
-            ${isSelected ? "bg-emerald-800" : ""}
-            ${isConflicting && !isSelected ? "bg-red-200" : ""}
-            ${isWin ? "animate-bounce-contained" : ""}
-          `;
+        {/* Cells Grid */}
+        <div className="absolute inset-0 grid grid-cols-9 grid-rows-9 gap-0">
+          {board.map((row, rowIdx) =>
+            row.map((cell, colIdx) => {
+              const isSelected =
+                selectedCell &&
+                selectedCell.row === rowIdx &&
+                selectedCell.col === colIdx;
+              
+              const isInSubgrid =
+                selectedCell &&
+                Math.floor(rowIdx / 3) === Math.floor(selectedCell.row / 3) &&
+                Math.floor(colIdx / 3) === Math.floor(selectedCell.col / 3);
+              const isInRow = selectedCell && selectedCell.row === rowIdx;
+              const isInCol = selectedCell && selectedCell.col === colIdx;
+              
+              const hasSameValue =
+                selectedCell &&
+                !isSelected &&
+                cell.value === board[selectedCell.row][selectedCell.col]?.value &&
+                cell.value !== 0;
 
-            return (
-              <div
-                key={`${rowIdx}-${colIdx}`}
-                className={cellClass}
-                onClick={() => handleCellClick(rowIdx, colIdx)}
-              >
-                <Cell
-                  cell={cell}
-                  onClick={handleCellClick}
-                  rowIdx={rowIdx}
-                  colIdx={colIdx}
-                  isSelected={isSelected ? isSelected : false}
-                  selectedCellValue={
-                    board[selectedCell?.row || 0][selectedCell?.col || 0]?.value
-                  }
-                />
-              </div>
-            );
-          })
-        )}
+              const isConflicting =
+                cell.value !== 0 &&
+                (isInRow || isInCol || isInSubgrid) &&
+                checkConflicts(rowIdx, colIdx, cell.value);
+
+              // Determine background color using original palette
+              let bgColor = "bg-white"; 
+              if (isInSubgrid || isInRow || isInCol) bgColor = "bg-emerald-100";
+              if (hasSameValue) bgColor = "bg-teal-200";
+              if (isSelected) bgColor = "bg-emerald-800 !text-white";
+              if (isConflicting && !isSelected) bgColor = "bg-red-200";
+              if (cell.isWrong && !isSelected) bgColor = "bg-red-200";
+
+              // Thin gray borders for individual cells
+              const borderClasses = `
+                ${colIdx % 3 !== 2 ? "border-r border-gray-300" : ""}
+                ${rowIdx % 3 !== 2 ? "border-b border-gray-300" : ""}
+              `;
+
+              return (
+                <div
+                  key={`${rowIdx}-${colIdx}`}
+                  className={`
+                    relative flex items-center justify-center cursor-pointer select-none transition-colors duration-100
+                    ${bgColor}
+                    ${borderClasses}
+                  `}
+                  onClick={() => handleCellClick(rowIdx, colIdx)}
+                >
+                  <Cell
+                    cell={cell}
+                    onClick={handleCellClick}
+                    rowIdx={rowIdx}
+                    colIdx={colIdx}
+                    isSelected={isSelected}
+                    selectedCellValue={
+                      board[selectedCell?.row || 0][selectedCell?.col || 0]?.value
+                    }
+                  />
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
     </div>
   );

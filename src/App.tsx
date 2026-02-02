@@ -3,6 +3,7 @@ import Grid from "./components/Grid";
 import type { Difficulty, SudokuBoard, SudokuCell } from "./utils/types";
 import NumberPad from "./components/NumberPad";
 import SudokuGenerator from "./utils/sudokuGenerator";
+import AdPlaceholder from "./components/AdPlaceholder";
 
 // Type for individual change delta
 type ChangeDelta = {
@@ -12,6 +13,7 @@ type ChangeDelta = {
   newValue: number;
   oldMiniGrid?: number[];
   newMiniGrid?: number[];
+  isPencilChange?: boolean; // Track if this was a pencil change
 };
 
 type ChangeGroup = ChangeDelta[];
@@ -32,7 +34,7 @@ const App: React.FC = () => {
   const [selectedCell, setSelectedCell] = useState<{
     row: number;
     col: number;
-  }>({ row: 0, col: 0 }); // Allow null for no selection
+  }>({ row: 0, col: 0 }); 
   const selectedCellRef = useRef<{ row: number; col: number } | null>(null);
   const [pencilMode, setPencilMode] = useState(false);
   const [availableDigits, setAvailableDigits] = useState<number[]>([
@@ -42,11 +44,11 @@ const App: React.FC = () => {
   const [redoHistory, setRedoHistory] = useState<ChangeGroup[]>([]);
   const [mistake, setMistake] = useState(0);
   const [isWin, setIsWin] = useState(false);
-  // Use a ref to track the latest pencilMode value
+  
   const pencilModeRef = useRef(pencilMode);
 
   useEffect(() => {
-    pencilModeRef.current = pencilMode; // Sync ref with state
+    pencilModeRef.current = pencilMode; 
   }, [pencilMode]);
 
   const togglePencilMode = () => {
@@ -67,6 +69,8 @@ const App: React.FC = () => {
     setOriginalBoard([...puzzle]);
     setUndoHistory([]);
     setRedoHistory([]);
+    setMistake(0);
+    setIsWin(false);
   }, []);
 
   const generatePuzzle = useCallback((difficulty: Difficulty) => {
@@ -84,9 +88,12 @@ const App: React.FC = () => {
     setSolution([...solution2D]);
   }, [difficulty, initializeBoard, generatePuzzle]);
 
-  // console.log({ pencilMode });
-
   const handleCellChange = (row: number, col: number, value: number) => {
+    if (isWin) return;
+    
+    // Don't allow changing fixed cells
+    if (board[row][col].isFixed) return;
+
     const changeGroup: ChangeGroup = [];
     setBoard((prevBoard) => {
       let error = false;
@@ -95,34 +102,47 @@ const App: React.FC = () => {
           if (i === row && j === col) {
             const oldValue = cell.value;
             const oldMiniGrid = [...(cell.miniGrid || [])];
-            changeGroup.push({
-              row: i,
-              col: j,
-              oldValue,
-              newValue: value,
-              oldMiniGrid,
-              newMiniGrid: oldMiniGrid,
-            });
-            // console.log("Current pencilMode (ref):", pencilModeRef.current); // Use ref for latest value
-
+            
+            // Logic for Pencil Mode
             if (pencilModeRef.current) {
-              // Use ref instead of pencilMode
               const updatedMiniGrid = cell.miniGrid || [];
               const newMiniGrid = updatedMiniGrid.includes(value)
                 ? updatedMiniGrid.filter((n) => n !== value)
                 : [...updatedMiniGrid, value];
+              
+              changeGroup.push({
+                row: i,
+                col: j,
+                oldValue,
+                newValue: oldValue, // Value doesn't change in pencil mode
+                oldMiniGrid,
+                newMiniGrid,
+                isPencilChange: true
+              });
+
               return { ...cell, value: 0, miniGrid: newMiniGrid };
             } else {
+              // Regular Mode
               const isConflict = checkConflicts(prevBoard, row, col, value);
               const correctValue = solution[row][col];
               const isWrong = value !== 0 && value !== correctValue;
               error = isWrong;
+              
+              changeGroup.push({
+                row: i,
+                col: j,
+                oldValue,
+                newValue: value,
+                oldMiniGrid,
+                newMiniGrid: [], 
+                isPencilChange: false
+              });
 
               return { ...cell, value, isConflict, isWrong, miniGrid: [] };
             }
           }
+           // Auto-remove pencil marks (miniGrid) in the same row/col/subgrid if a real number is placed
           if (!pencilModeRef.current && value !== 0) {
-            // Use ref
             const isInSameRow = i === row;
             const isInSameCol = j === col;
             const isInSameSubgrid =
@@ -132,6 +152,13 @@ const App: React.FC = () => {
               const oldMiniGrid = [...(cell.miniGrid || [])];
               const newMiniGrid = oldMiniGrid.filter((n) => n !== value);
               if (oldMiniGrid.length !== newMiniGrid.length) {
+                // We should technically track these side-effects in history too for full undo, 
+                // but for simplicity keeping it local for now or adding to changeGroup if we want robust undo.
+                 // For this simple implementation, we might skip detailed side-effect undoing or assume regeneration.
+                 // Ideally, we'd add these to changeGroup.
+                 changeGroup.push({
+                   row: i, col: j, oldValue: cell.value, newValue: cell.value, oldMiniGrid, newMiniGrid, isPencilChange: true
+                 })
                 return {
                   ...cell,
                   miniGrid: newMiniGrid,
@@ -202,11 +229,10 @@ const App: React.FC = () => {
     setSolution(solution2D);
   };
 
-  const handleKeyEvent = (e: KeyboardEvent) => {
+  const handleKeyEvent = useCallback((e: KeyboardEvent) => {
     if (!selectedCell) return;
     const { row, col } = selectedCell;
     const num = parseInt(e.key, 10);
-    // console.log("input value:", e.key);
 
     if (e.key === "Backspace" || e.key === " " || e.key === "0") {
       handleCellChange(row, col, 0);
@@ -215,51 +241,55 @@ const App: React.FC = () => {
       handleCellChange(row, col, num);
       e.preventDefault();
     } else if (e.key === "ArrowUp") {
-      setSelectedCell((prev) => {
-        return { row: Math.max(0, prev.row - 1), col: prev.col };
-      });
+      setSelectedCell((prev) => ({ row: Math.max(0, prev.row - 1), col: prev.col }));
+      e.preventDefault();
     } else if (e.key === "ArrowDown") {
-      setSelectedCell((prev) => {
-        return { row: Math.min(8, prev.row + 1), col: prev.col };
-      });
+      setSelectedCell((prev) => ({ row: Math.min(8, prev.row + 1), col: prev.col }));
+      e.preventDefault();
     } else if (e.key === "ArrowLeft") {
-      setSelectedCell((prev) => {
-        return { row: prev.row, col: Math.max(0, prev.col - 1) };
-      });
+      setSelectedCell((prev) => ({ row: prev.row, col: Math.max(0, prev.col - 1) }));
+      e.preventDefault();
     } else if (e.key === "ArrowRight") {
-      setSelectedCell((prev) => {
-        return { row: prev.row, col: Math.min(8, prev.col + 1) };
-      });
+      setSelectedCell((prev) => ({ row: prev.row, col: Math.min(8, prev.col + 1) }));
+      e.preventDefault();
+    } else if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+       handleUndo();
+       e.preventDefault();
+    } else if ((e.ctrlKey || e.metaKey) && e.key === "y") {
+       handleRedo();
+       e.preventDefault();
     }
-  };
+  }, [selectedCell, handleCellChange]); // Added deps but handleCellChange changes often so might be cautious
+
+  // Better keep handleKeyEvent simple or use refs if deps are issue. 
+  // Ideally handleCellChange shouldn't change, but it depends on state.
+  // Re-attaching listener on every move is okay effectively.
 
   useEffect(() => {
     selectedCellRef.current = selectedCell;
   }, [selectedCell]);
 
   useEffect(() => {
+    // We need to wrap handleKeyEvent to use the latest state if not using refs perfectly
+    // But since we re-bind on [selectedCell], it covers navigation. 
+    // For input logic relying on board, handleCellChange uses setState callback which is safe.
     document.addEventListener("keydown", handleKeyEvent);
     return () => document.removeEventListener("keydown", handleKeyEvent);
-  }, [selectedCell]);
+  }, [handleKeyEvent]);
 
   useEffect(() => {
     if (board.length === 0) return;
     const newAvailableDigits: number[] = [];
     for (let num = 1; num <= 9; num++) {
-      let isNeeded = false;
-      for (let row = 0; row < 9; row++) {
-        for (let col = 0; col < 9; col++) {
-          if (board[row][col].value === 0 || board[row][col].value === null) {
-            const isValid = !checkConflicts(board, row, col, num);
-            if (isValid) {
-              isNeeded = true;
-              break;
-            }
-          }
-        }
-        if (isNeeded) break;
+      // Simple check: if any cell is empty, check if this number can go there
+      // A more robust check: does this number ALREADY exist 9 times?
+      let count = 0;
+      for(let r=0; r<9; r++) {
+         for(let c=0; c<9; c++) {
+            if (board[r][c].value === num) count++;
+         }
       }
-      if (isNeeded) newAvailableDigits.push(num);
+      if (count < 9) newAvailableDigits.push(num);
     }
     setAvailableDigits(newAvailableDigits);
   }, [board]);
@@ -271,27 +301,30 @@ const App: React.FC = () => {
     setRedoHistory((prev) => [...prev, lastGroup]);
 
     setBoard((prevBoard) => {
-      const newBoard = prevBoard.map((r, i) =>
-        r.map((cell, j) => {
-          const change = lastGroup.find(
-            (delta) => delta.row === i && delta.col === j
-          );
-          if (change) {
-            const isConflict = checkConflicts(prevBoard, i, j, change.oldValue);
-            const correctValue = solution[i][j];
-            const isWrong =
-              change.oldValue !== 0 && change.oldValue !== correctValue;
-            return {
-              ...cell,
-              value: change.oldValue,
-              miniGrid: change.oldMiniGrid || [],
-              isConflict,
-              isWrong,
-            };
-          }
-          return cell;
-        })
-      );
+      const newBoard = prevBoard.map((r) => r.map((c) => ({ ...c }))); // Deep copy for safety
+      
+      // We need to apply changes in reverse order if they matter, but here they are grouped
+      lastGroup.forEach((delta) => {
+        const { row, col, oldValue, oldMiniGrid } = delta;
+        newBoard[row][col].value = oldValue;
+        newBoard[row][col].miniGrid = oldMiniGrid || [];
+        
+        // Re-calculate correctness
+        if (oldValue !== 0) {
+            const isConflict = checkConflicts(newBoard, row, col, oldValue); 
+             // Note: checkConflicts needs the board state *during* the check. 
+             // Since we are batch updating, this might be tricky if conflicts depend on other changes in same group.
+             // But usually group is 1 cell change + auto-removals.
+             // Auto-removals (pencil marks) don't affect conflicts.
+             // So main cell change is key.
+            const correctValue = solution[row][col];
+            newBoard[row][col].isWrong = oldValue !== correctValue;
+            newBoard[row][col].isConflict = isConflict; 
+        } else {
+             newBoard[row][col].isWrong = false;
+             newBoard[row][col].isConflict = false;
+        }
+      });
       return newBoard;
     });
   };
@@ -303,216 +336,182 @@ const App: React.FC = () => {
     setUndoHistory((prev) => [...prev, nextGroup]);
 
     setBoard((prevBoard) => {
-      const newBoard = prevBoard.map((r, i) =>
-        r.map((cell, j) => {
-          const change = nextGroup.find(
-            (delta) => delta.row === i && delta.col === j
-          );
-          if (change) {
-            const isConflict = checkConflicts(prevBoard, i, j, change.newValue);
-            const correctValue = solution[i][j];
-            const isWrong =
-              change.newValue !== 0 && change.newValue !== correctValue;
-            return {
-              ...cell,
-              value: change.newValue,
-              miniGrid: change.newMiniGrid || [],
-              isConflict,
-              isWrong,
-            };
-          }
-          return cell;
-        })
-      );
+      const newBoard = prevBoard.map((r) => r.map((c) => ({ ...c })));
+      nextGroup.forEach((delta) => {
+         const { row, col, newValue, newMiniGrid } = delta;
+         newBoard[row][col].value = newValue;
+         newBoard[row][col].miniGrid = newMiniGrid || [];
+
+         if (newValue !== 0) {
+            const isConflict = checkConflicts(newBoard, row, col, newValue);
+            const correctValue = solution[row][col];
+            newBoard[row][col].isWrong = newValue !== correctValue;
+            newBoard[row][col].isConflict = isConflict;
+         } else {
+            newBoard[row][col].isWrong = false;
+            newBoard[row][col].isConflict = false;
+         }
+      });
       return newBoard;
     });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center p-2 sm:p-4 w-220">
-      <div className="w-full max-w-6xl bg-white rounded-xl shadow-2xl overflow-hidden">
-        {/* Header Section */}
-        <div className="bg-emerald-600 text-white p-4 sm:p-6 text-center">
-          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-wide flex items-center justify-center gap-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 sm:h-8 w-6 sm:w-8"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 2l3.09 6.26L19 10l-5 4.87L14.91 19 12 15.74 9.09 19l1.91-4.13L5 10l3.91-1.74L12 2z"
-              />
-            </svg>
-            Sudoku Master
-          </h1>
-        </div>
-        <div className="m-2 p-2 flex flex-col sm:flex-row items-center justify-between">
-          <div className="flex items-center space-x-2 mb-2 sm:mb-0">
-            <span className="text-base sm:text-lg font-semibold text-gray-700">
-              Difficulty:
-            </span>
-            <div className="flex space-x-2 flex-wrap">
-              {difficulties.map((level) => (
-                <button
-                  key={level}
-                  onClick={() => setDifficulty(level)}
-                  className={`px-2 sm:px-4 py-1 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 ${
-                    difficulty === level
-                      ? "bg-emerald-600 text-white shadow-md"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  }`}
-                >
-                  {level.charAt(0).toUpperCase() + level.slice(1)}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-        {/* Main Content */}
-        <div className="p-2 sm:p-6 flex flex-col sm:flex-row gap-4">
-          {/* Game Area */}
-          <div className="w-full sm:w-2/3">
-            <Grid
-              board={board}
-              selectedCell={selectedCell}
-              setSelectedCell={setSelectedCell}
-              isWin={isWin}
-            />
-            {isWin && (
-              <div className="mt-2 sm:mt-4 p-2 sm:p-4 bg-green-100 text-green-800 rounded-lg text-center font-bold text-lg sm:text-xl">
-                Win!
-              </div>
-            )}
-          </div>
+    <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+      {/* Top Banner Ad */}
+      <div className="w-full bg-white border-b border-gray-200 p-2 flex justify-center sticky top-0 z-40">
+        <AdPlaceholder width={728} height={90} label="Top Banner Ad (728x90)" className="hidden md:flex" />
+        <AdPlaceholder width={320} height={50} label="Mobile Banner Ad (320x50)" className="flex md:hidden" />
+      </div>
 
-          {/* Controls Panel */}
-          <div className="w-full sm:w-1/3 rounded-lg">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="text-base sm:text-lg font-semibold text-gray-600">
-                  Mistakes:{" "}
-                  <span className="text-base sm:text-lg">{mistake}/3</span>
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-2 sm:gap-4 w-2xs">
-                <button
-                  onClick={togglePencilMode}
-                  // className={`w-full flex items-center justify-center px-2 sm:px-3 py-2 sm:py-3 rounded-full transition-all duration-200 relative pencil-button ${
-                  className={`flex items-center justify-center px-2 sm:px-3 py-2 sm:py-3 transition-all duration-200 bg-gray-200 text-emerald-800 rounded-full hover:bg-gray-300 border-2 border-transparent active:scale-95 active:shadow-inner active:bg-gray-300
-                   ${
-                     pencilMode
-                       ? "bg-gray-200 text-emerald-800 hover:bg-gray-300 border-2 border-emerald-700"
-                       : "bg-gray-200 text-emerald-800 hover:bg-gray-300 border-2 border-transparent"
-                   } active:scale-95 active:shadow-inner active:bg-gray-300`}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 30 31"
-                    strokeWidth="2"
-                    stroke="currentColor"
-                    className="size-6 sm:size-8"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125"
-                    />
-                  </svg>
-                </button>
-                <button
-                  onClick={handleUndo}
-                  className="flex items-center justify-center px-2 sm:px-3 py-2 sm:py-3 transition-all duration-200 bg-gray-200 text-emerald-800 rounded-full hover:bg-gray-300 border-2 border-transparent active:scale-95 active:shadow-inner active:bg-gray-300"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    fill="currentColor"
-                    className="bi bi-arrow-counterclockwise h-6 sm:h-8 w-6 sm:w-8"
-                    viewBox="0 0 16 16"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2z"
-                    />
-                    <path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466" />
-                  </svg>
-                </button>
-                <button
-                  onClick={handleRedo}
-                  className="flex items-center justify-center px-2 sm:px-3 py-2 sm:py-3 transition-all duration-200 bg-gray-200 text-emerald-800 rounded-full hover:bg-gray-300 border-2 border-transparent active:scale-95 active:shadow-inner active:bg-gray-300"
-                  // className="w-full flex items-center justify-center px-2 sm:px-3 py-2 sm:py-3 transition-all duration-200 bg-gray-200 text-emerald-800 rounded-full hover:bg-gray-300 border-2 border-transparent active:scale-95 active:shadow-inner active:bg-gray-300"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    fill="currentColor"
-                    className="bi bi-arrow-clockwise h-6 sm:h-8 w-6 sm:w-8"
-                    viewBox="0 0 16 16"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"
-                    />
-                    <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466" />
-                  </svg>
-                </button>
-              </div>
-              <NumberPad
-                onSelect={handleNumber}
-                availableDigits={availableDigits}
-                // className="grid grid-cols-3 gap-2 sm:gap-3"
-              />
-              <button
-                onClick={handleNewGame}
-                className="w-full flex items-center justify-center px-3 sm:px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-all duration-200"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 sm:h-5 w-4 sm:w-5 mr-1 sm:mr-2"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                New Game
-              </button>
-              <button
-                onClick={handleReset}
-                className="w-full flex items-center justify-center px-3 sm:px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-200"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 sm:h-5 w-4 sm:w-5 mr-1 sm:mr-2"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
-                </svg>
-                Reset
-              </button>
-            </div>
-          </div>
+      <div className="flex-1 flex flex-col md:flex-row justify-center items-start gap-6 p-4 max-w-7xl mx-auto w-full">
+        {/* Left Side Ad (Desktop) */}
+        <div className="hidden xl:flex flex-col gap-4 w-[160px]">
+           <AdPlaceholder width={160} height={600} label="Skyscraper Ad" />
         </div>
+
+        {/* Main Game Container */}
+        <div className="flex-1 max-w-4xl flex flex-col gap-6">
+           {/* Header */}
+           <div className="flex flex-col gap-4">
+             {/* Title Row */}
+             <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+               <h1 className="text-3xl font-extrabold text-gray-800 flex items-center gap-2">
+                 <span className="text-emerald-600">Sudoku</span> Master
+               </h1>
+               <div className="flex items-center gap-2 mt-2 sm:mt-0 overflow-x-auto max-w-full pb-1 sm:pb-0">
+                 {difficulties.map((level) => (
+                   <button
+                     key={level}
+                     onClick={() => setDifficulty(level)}
+                     className={`px-3 py-1 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
+                       difficulty === level
+                         ? "bg-emerald-600 text-white shadow-md shadow-emerald-200"
+                         : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                     }`}
+                   >
+                     {level.charAt(0).toUpperCase() + level.slice(1)}
+                   </button>
+                 ))}
+               </div>
+             </div>
+
+             {/* Mobile Action Bar (Above Board) */}
+             <div className="flex lg:hidden justify-between items-center bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                <div className="text-gray-600 font-semibold text-sm">
+                   Mistakes: <span className={`${mistake >= 3 ? "text-red-500" : "text-emerald-600"}`}>{mistake}/3</span>
+                </div>
+                <div className="flex gap-2">
+                    <button onClick={togglePencilMode} className={`p-2 rounded-lg border ${pencilMode ? "bg-emerald-100 border-emerald-500 text-emerald-700" : "bg-gray-50 border-gray-200 text-gray-600"}`}>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                    </button>
+                    <button onClick={handleUndo} className="p-2 rounded-lg bg-gray-50 border border-gray-200 text-gray-600"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg></button>
+                    <button onClick={handleRedo} className="p-2 rounded-lg bg-gray-50 border border-gray-200 text-gray-600"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" /></svg></button>
+                </div>
+             </div>
+           </div>
+
+           {/* Game Board & Controls */}
+           <div className="flex flex-col lg:flex-row gap-6 items-start">
+              {/* Grid Section */}
+              <div className="flex-1 w-full flex flex-col items-center gap-4">
+                 <div className="w-full flex justify-center lg:justify-end">
+                    <Grid
+                        board={board}
+                        selectedCell={selectedCell}
+                        setSelectedCell={setSelectedCell}
+                        isWin={isWin}
+                    />
+                 </div>
+                 
+                 {/* Mobile Number Pad (Below Grid) */}
+                 <div className="w-full lg:hidden bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                    <NumberPad onSelect={handleNumber} availableDigits={availableDigits} />
+                 </div>
+              </div>
+
+              {/* Desktop Controls Section */}
+              <div className="w-full lg:w-80 flex flex-col gap-6">
+                 
+                 {/* Desktop Status & Actions (Hidden on Mobile) */}
+                 <div className="hidden lg:flex flex-col gap-6">
+                     <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+                        <div className="text-gray-600 font-semibold">Mistakes</div>
+                        <div className={`text-xl font-bold ${mistake >= 3 ? "text-red-500" : "text-emerald-600"}`}>{mistake}/3</div>
+                     </div>
+
+                     <div className="grid grid-cols-3 gap-3">
+                        <button
+                          onClick={togglePencilMode}
+                          className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all border-2 ${
+                            pencilMode
+                              ? "bg-emerald-50 border-emerald-500 text-emerald-700"
+                              : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300"
+                          }`}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                          <span className="text-xs font-bold w-full text-center">{pencilMode ? "ON" : "Note"}</span>
+                        </button>
+                        <button
+                          onClick={handleUndo}
+                          className="flex flex-col items-center justify-center p-3 rounded-xl bg-white border-2 border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                          </svg>
+                          <span className="text-xs font-bold">Undo</span>
+                        </button>
+                        <button
+                          onClick={handleRedo}
+                          className="flex flex-col items-center justify-center p-3 rounded-xl bg-white border-2 border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
+                          </svg>
+                          <span className="text-xs font-bold">Redo</span>
+                        </button>
+                     </div>
+                 </div>
+
+                 {/* Desktop Number Pad (Hidden on Mobile) */}
+                 <div className="hidden lg:block bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <NumberPad onSelect={handleNumber} availableDigits={availableDigits} />
+                 </div>
+
+                 {/* Game Controls (New Game / Reset) - Always Visible but styled differently if needed */}
+                 <div className="flex gap-3 mt-4 lg:mt-0">
+                    <button
+                      onClick={handleNewGame}
+                      className="flex-1 py-3 px-4 bg-emerald-600 text-white rounded-xl font-bold shadow-lg shadow-emerald-200 hover:bg-emerald-700 active:scale-95 transition-all flex items-center justify-center gap-2"
+                    >
+                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                       </svg>
+                       New Game
+                    </button>
+                    <button
+                      onClick={handleReset}
+                       className="px-4 py-3 bg-white text-red-500 border-2 border-red-100 rounded-xl font-bold hover:bg-red-50 active:scale-95 transition-all"
+                    >
+                       Reset
+                    </button>
+                 </div>
+              </div>
+           </div>
+        </div>
+        
+        {/* Right Side Ad (Desktop) */}
+        <div className="hidden xl:flex flex-col gap-4 w-[160px]">
+           <AdPlaceholder width={160} height={600} label="Skyscraper Ad" />
+        </div>
+      </div>
+      
+      {/* Bottom Ad for Mobile */}
+      <div className="p-4 flex md:hidden justify-center pb-8">
+         <AdPlaceholder width={300} height={250} label="Rectangle Ad" />
       </div>
     </div>
   );
